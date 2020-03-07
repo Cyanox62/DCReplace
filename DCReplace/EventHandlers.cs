@@ -5,11 +5,22 @@ using System.Linq;
 using UnityEngine;
 using scp035.API;
 using System;
+using System.Collections.Generic;
 
 namespace DCReplace
 {
 	class EventHandlers
 	{
+		private ReferenceHub TryGet035()
+		{
+			return Scp035Data.GetScp035();
+		}
+
+		private List<int> TryGetSH()
+		{
+			return SerpentsHand.API.SerpentsHand.GetSHPlayers();
+		}
+
 		public void OnPlayerLeave(PlayerLeaveEvent ev)
 		{
 			if (ev.Player.GetTeam() != Team.RIP)
@@ -18,7 +29,7 @@ namespace DCReplace
 				bool isSH = false;
 				try
 				{
-					is035 = ev.Player.queryProcessor.PlayerId == Scp035Data.GetScp035()?.queryProcessor.PlayerId;
+					is035 = ev.Player.queryProcessor.PlayerId == TryGet035()?.queryProcessor.PlayerId;
 				}
 				catch (Exception x)
 				{
@@ -27,11 +38,11 @@ namespace DCReplace
 
 				try
 				{
-					isSH = SerpentsHand.API.SerpentsHand.GetSHPlayers().Contains(ev.Player.queryProcessor.PlayerId);
+					isSH = TryGetSH().Contains(ev.Player.queryProcessor.PlayerId);
 				}
 				catch (Exception x)
 				{
-					Log.Warn("SerpentsHand is not installed, skipping method call...");
+					Log.Warn("Serpents Hand is not installed, skipping method call...");
 				}
 
 				Inventory.SyncListItemInfo items = ev.Player.inventory.items;
