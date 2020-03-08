@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using scp035.API;
 using System;
+using CISpy.API;
 using System.Collections.Generic;
 
 namespace DCReplace
@@ -21,12 +22,18 @@ namespace DCReplace
 			return SerpentsHand.API.SerpentsHand.GetSHPlayers();
 		}
 
+		private Dictionary<ReferenceHub, bool> TryGetSpies()
+		{
+			return SpyData.GetSpies();
+		}
+
 		public void OnPlayerLeave(PlayerLeaveEvent ev)
 		{
 			if (ev.Player.GetTeam() != Team.RIP)
 			{
 				bool is035 = false;
 				bool isSH = false;
+				Dictionary<ReferenceHub, bool> spies = null;
 				try
 				{
 					is035 = ev.Player.queryProcessor.PlayerId == TryGet035()?.queryProcessor.PlayerId;
@@ -45,6 +52,15 @@ namespace DCReplace
 					Log.Warn("Serpents Hand is not installed, skipping method call...");
 				}
 
+				try
+				{
+					spies = TryGetSpies();
+				}
+				catch (Exception x)
+				{
+					Log.Warn("CISpy is not installed, skipping method call...");
+				}
+
 				Inventory.SyncListItemInfo items = ev.Player.inventory.items;
 				RoleType role = ev.Player.GetRole();
 				Vector3 pos = ev.Player.transform.position;
@@ -56,15 +72,13 @@ namespace DCReplace
 				{
 					if (isSH) SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
 					else player.SetRole(role);
+					if (spies != null && spies.ContainsKey(ev.Player)) SpyData.MakeSpy(player, spies[ev.Player], false);
 					if (is035) Scp035Data.Spawn035(player);
 					Timing.CallDelayed(0.3f, () =>
 					{
 						player.SetPosition(pos);
 						player.inventory.items.ToList().Clear();
-						foreach (var item in items)
-						{
-							player.inventory.AddNewItem(item.id);
-						}
+						foreach (var item in items) player.inventory.AddNewItem(item.id);
 						player.playerStats.health = health;
 						player.ammoBox.Networkamount = ammo;
 						player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>", false);
