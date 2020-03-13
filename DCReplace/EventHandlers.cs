@@ -27,6 +27,21 @@ namespace DCReplace
 			return SpyData.GetSpies();
 		}
 
+		private void TrySpawnSpy(ReferenceHub player, ReferenceHub dc, Dictionary<ReferenceHub, bool> spies)
+		{
+			SpyData.MakeSpy(player, spies[dc], false);
+		}
+
+		private void TrySpawnSH(ReferenceHub player)
+		{
+			SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
+		}
+
+		private void TrySpawn035(ReferenceHub player)
+		{
+			Scp035Data.Spawn035(player);
+		}
+
 		public void OnPlayerLeave(PlayerLeaveEvent ev)
 		{
 			if (ev.Player.GetTeam() != Team.RIP)
@@ -40,7 +55,7 @@ namespace DCReplace
 				}
 				catch (Exception x)
 				{
-					Log.Warn("SCP-035 is not installed, skipping method call...");
+					Log.Debug("SCP-035 is not installed, skipping method call...");
 				}
 
 				try
@@ -49,7 +64,7 @@ namespace DCReplace
 				}
 				catch (Exception x)
 				{
-					Log.Warn("Serpents Hand is not installed, skipping method call...");
+					Log.Debug("Serpents Hand is not installed, skipping method call...");
 				}
 
 				try
@@ -58,7 +73,7 @@ namespace DCReplace
 				}
 				catch (Exception x)
 				{
-					Log.Warn("CISpy is not installed, skipping method call...");
+					Log.Debug("CISpy is not installed, skipping method call...");
 				}
 
 				Inventory.SyncListItemInfo items = ev.Player.inventory.items;
@@ -70,10 +85,40 @@ namespace DCReplace
 				ReferenceHub player = Player.GetHubs().FirstOrDefault(x => x.GetRole() == RoleType.Spectator && x.characterClassManager.UserId != string.Empty && !x.GetOverwatch());
 				if (player != null)
 				{
-					if (isSH) SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
+					if (isSH)
+					{
+						try
+						{
+							TrySpawnSH(player);
+						}
+						catch (Exception x)
+						{
+							Log.Debug("Serpents Hand is not installed, skipping method call...");
+						}
+					}
 					else player.SetRole(role);
-					if (spies != null && spies.ContainsKey(ev.Player)) SpyData.MakeSpy(player, spies[ev.Player], false);
-					if (is035) Scp035Data.Spawn035(player);
+					if (spies != null && spies.ContainsKey(ev.Player))
+					{
+						try
+						{
+							TrySpawnSpy(player, ev.Player, spies);
+						}
+						catch (Exception x)
+						{
+							Log.Debug("CISpy is not installed, skipping method call...");
+						}
+					}
+					if (is035)
+					{
+						try
+						{
+							TrySpawn035(player);
+						}
+						catch (Exception x)
+						{
+							Log.Debug("SCP-035 is not installed, skipping method call...");
+						}
+					}
 					Timing.CallDelayed(0.3f, () =>
 					{
 						player.SetPosition(pos);
