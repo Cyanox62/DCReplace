@@ -1,4 +1,4 @@
-﻿using EXILED;
+using EXILED;
 using EXILED.Extensions;
 using MEC;
 using System.Linq;
@@ -126,8 +126,8 @@ namespace DCReplace
 						foreach (var item in items) player.inventory.AddNewItem(item.id);
 						player.playerStats.health = health;
 						player.ammoBox.Networkamount = ammo;
-						player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>", false);
-					});
+                        			player.Broadcast(5, MsgConfig.ReplaceCustomMsg, false);
+                    			});
 				}
 			}
 		}
