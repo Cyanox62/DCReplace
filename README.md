@@ -7,8 +7,8 @@ Compatible with [Serpents Hand](https://github.com/Cyanox62/SerpentsHand/tree/ex
 # Config
 | Config | Type | Description |
 | ------ | ------ | ------ |
-| dcr_enabled | boolean | true by default. Enable or disable the plugin. |
-| dcr_message | String | <i>You have replaced a disconnected player.</i> by default. Change the message that displays when you replace a player. |
+| dcr_enabled | boolean | **true by default.** Enable or disable the plugin. |
+| dcr_message | String | **<i><i>You have replaced a disconnected player.</i></i>** by default. Change the message that displays when you replace a player. |
 
 
 # Installation
