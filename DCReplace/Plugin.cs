@@ -11,6 +11,8 @@ namespace DCReplace
 			ev = new EventHandlers();
 
 			Events.PlayerLeaveEvent += ev.OnPlayerLeave;
+			Events.Scp106ContainEvent += ev.OnContain106;
+			Events.RoundStartEvent += ev.OnRoundStart;
 		}
 
 		public override void OnDisable()

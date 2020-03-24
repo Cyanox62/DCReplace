@@ -12,6 +12,8 @@ namespace DCReplace
 {
 	class EventHandlers
 	{
+		private bool isContain106;
+
 		private ReferenceHub TryGet035()
 		{
 			return Scp035Data.GetScp035();
@@ -40,6 +42,16 @@ namespace DCReplace
 		private void TrySpawn035(ReferenceHub player)
 		{
 			Scp035Data.Spawn035(player);
+		}
+
+		public void OnRoundStart()
+		{
+			isContain106 = false;
+		}
+
+		public void OnContain106(Scp106ContainEvent ev)
+		{
+			isContain106 = true;
 		}
 
 		public void OnPlayerLeave(PlayerLeaveEvent ev)
@@ -119,6 +131,7 @@ namespace DCReplace
 							Log.Debug("SCP-035 is not installed, skipping method call...");
 						}
 					}
+					if (isContain106 && ev.Player.GetRole() == RoleType.Scp106) return;
 					Timing.CallDelayed(0.3f, () =>
 					{
 						player.SetPosition(pos);
