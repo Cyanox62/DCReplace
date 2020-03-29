@@ -93,6 +93,16 @@ namespace DCReplace
 				Vector3 pos = ev.Player.transform.position;
 				int health = (int)ev.Player.playerStats.health;
 				string ammo = ev.Player.ammoBox.amount;
+				
+				// Stuff for 079
+				int Level079 = 0;
+				float Exp079 = 0f, AP079 = 0f;
+				if (role == RoleType.Scp079)
+				{
+					Level079 = Scp079.GetLevel(ev.Player);
+					Exp079 = Scp079.GetExperience(ev.Player);
+					AP079 = Scp079.SetEnergy(ev.Player);
+				}
 
 				ReferenceHub player = Player.GetHubs().FirstOrDefault(x => x.GetRole() == RoleType.Spectator && x.characterClassManager.UserId != string.Empty && !x.GetOverwatch());
 				if (player != null)
@@ -139,6 +149,12 @@ namespace DCReplace
 						foreach (var item in items) player.inventory.AddNewItem(item.id);
 						player.playerStats.health = health;
 						player.ammoBox.Networkamount = ammo;
+						if (role == RoleType.Scp079)
+						{
+							Scp079.SetLevel(player, Level079, false);
+							Scp079.SetExperience(player, Exp079);
+							Scp079.SetEnergy(player, AP079);
+						}
 						player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>", false);
 					});
 				}
