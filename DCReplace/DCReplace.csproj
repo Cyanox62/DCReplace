@@ -84,7 +84,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Config.cs" />
-    <Compile Include="Data.cs" />
     <Compile Include="EventHandlers.cs" />
     <Compile Include="DCReplace.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
