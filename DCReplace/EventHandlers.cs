@@ -1,12 +1,13 @@
-﻿using EXILED;
-using EXILED.Extensions;
-using MEC;
+﻿using MEC;
 using System.Linq;
 using UnityEngine;
 using scp035.API;
 using System;
 using CISpy.API;
 using System.Collections.Generic;
+using Exiled.Events.EventArgs;
+using Exiled.API.Features;
+using Exiled.API.Enums;
 
 namespace DCReplace
 {
@@ -14,32 +15,32 @@ namespace DCReplace
 	{
 		private bool isContain106;
 
-		private ReferenceHub TryGet035()
+		private Player TryGet035()
 		{
 			return Scp035Data.GetScp035();
 		}
 
-		private List<int> TryGetSH()
+		private List<Player> TryGetSH()
 		{
 			return SerpentsHand.API.SerpentsHand.GetSHPlayers();
 		}
 
-		private Dictionary<ReferenceHub, bool> TryGetSpies()
+		private Dictionary<Player, bool> TryGetSpies()
 		{
 			return SpyData.GetSpies();
 		}
 
-		private void TrySpawnSpy(ReferenceHub player, ReferenceHub dc, Dictionary<ReferenceHub, bool> spies)
+		private void TrySpawnSpy(Player player, Player dc, Dictionary<Player, bool> spies)
 		{
 			SpyData.MakeSpy(player, spies[dc], false);
 		}
 
-		private void TrySpawnSH(ReferenceHub player)
+		private void TrySpawnSH(Player player)
 		{
 			SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
 		}
 
-		private void TrySpawn035(ReferenceHub player)
+		private void TrySpawn035(Player player)
 		{
 			Scp035Data.Spawn035(player);
 		}
@@ -49,99 +50,89 @@ namespace DCReplace
 			isContain106 = false;
 		}
 
-		public void OnContain106(Scp106ContainEvent ev)
+		public void OnContain106(ContainingEventArgs ev)
 		{
 			isContain106 = true;
 		}
 
-		public void OnPlayerLeave(PlayerLeaveEvent ev)
+		public void OnPlayerLeave(LeftEventArgs ev)
 		{
-			if (ev.Player.GetTeam() != Team.RIP)
+			bool is035 = false;
+			bool isSH = false;
+			if (isContain106 && ev.Player.Role == RoleType.Scp106) return;
+			Dictionary<Player, bool> spies = null;
+			try
 			{
-				bool is035 = false;
-				bool isSH = false;
-				Dictionary<ReferenceHub, bool> spies = null;
-				try
-				{
-					is035 = ev.Player.queryProcessor.PlayerId == TryGet035()?.queryProcessor.PlayerId;
-				}
-				catch (Exception x)
-				{
-					Log.Debug("SCP-035 is not installed, skipping method call...");
-				}
+				is035 = ev.Player.Id == TryGet035()?.Id;
+			}
+			catch (Exception x)
+			{
+				Log.Debug("SCP-035 is not installed, skipping method call...");
+			}
 
-				try
-				{
-					isSH = TryGetSH().Contains(ev.Player.queryProcessor.PlayerId);
-				}
-				catch (Exception x)
-				{
-					Log.Debug("Serpents Hand is not installed, skipping method call...");
-				}
+			try
+			{
+				isSH = TryGetSH().Contains(ev.Player);
+			}
+			catch (Exception x)
+			{
+				Log.Debug("Serpents Hand is not installed, skipping method call...");
+			}
 
-				try
-				{
-					spies = TryGetSpies();
-				}
-				catch (Exception x)
-				{
-					Log.Debug("CISpy is not installed, skipping method call...");
-				}
+			try
+			{
+				spies = TryGetSpies();
+			}
+			catch (Exception x)
+			{
+				Log.Debug("CISpy is not installed, skipping method call...");
+			}
 
-				Inventory.SyncListItemInfo items = ev.Player.inventory.items;
-				RoleType role = ev.Player.GetRole();
-				Vector3 pos = ev.Player.transform.position;
-				int health = (int)ev.Player.playerStats.health;
-				string ammo = ev.Player.ammoBox.amount;
-
-				ReferenceHub player = Player.GetHubs().FirstOrDefault(x => x.GetRole() == RoleType.Spectator && x.characterClassManager.UserId != string.Empty && !x.GetOverwatch());
-				if (player != null)
+			Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
+			if (player != null)
+			{
+				if (isSH)
 				{
-					if (isSH)
+					try
 					{
-						try
-						{
-							TrySpawnSH(player);
-						}
-						catch (Exception x)
-						{
-							Log.Debug("Serpents Hand is not installed, skipping method call...");
-						}
+						TrySpawnSH(player);
 					}
-					else player.SetRole(role);
-					if (spies != null && spies.ContainsKey(ev.Player))
+					catch (Exception x)
 					{
-						try
-						{
-							TrySpawnSpy(player, ev.Player, spies);
-						}
-						catch (Exception x)
-						{
-							Log.Debug("CISpy is not installed, skipping method call...");
-						}
+						Log.Debug("Serpents Hand is not installed, skipping method call...");
 					}
-					if (is035)
-					{
-						try
-						{
-							TrySpawn035(player);
-						}
-						catch (Exception x)
-						{
-							Log.Debug("SCP-035 is not installed, skipping method call...");
-						}
-					}
-					if (isContain106 && ev.Player.GetRole() == RoleType.Scp106) return;
-					Timing.CallDelayed(0.3f, () =>
-					{
-						player.SetPosition(pos);
-						player.inventory.items.ToList().Clear();
-						foreach (var item in items) player.inventory.AddNewItem(item.id);
-						player.playerStats.health = health;
-						player.ammoBox.Networkamount = ammo;
-						player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>", false);
-					});
 				}
+				else player.SetRole(ev.Player.Role);
+				if (spies != null && spies.ContainsKey(ev.Player))
+				{
+					try
+					{
+						TrySpawnSpy(player, ev.Player, spies);
+					}
+					catch (Exception x)
+					{
+						Log.Debug("CISpy is not installed, skipping method call...");
+					}
+				}
+				if (is035)
+				{
+					try
+					{
+						TrySpawn035(player);
+					}
+					catch (Exception x)
+					{
+						Log.Debug("SCP-035 is not installed, skipping method call...");
+					}
+				}
+				player.Position = ev.Player.Position;
+				player.ClearInventory();
+				player.ResetInventory(ev.Player.Inventory.items.Select(x => x.id).ToList());
+				player.Health = ev.Player.Health;
+				player.SetAmmo(AmmoType.Nato556, ev.Player.GetAmmo(AmmoType.Nato556));
+				player.SetAmmo(AmmoType.Nato762, ev.Player.GetAmmo(AmmoType.Nato762));
+				player.SetAmmo(AmmoType.Nato9, ev.Player.GetAmmo(AmmoType.Nato9));
+				player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
 			}
 		}
 	}
