@@ -14,49 +14,34 @@ namespace DCReplace
 	class EventHandlers
 	{
 		private bool isContain106;
+		private bool isRoundStarted = false;
 
-		private Player TryGet035()
-		{
-			return Scp035Data.GetScp035();
-		}
+		private Player TryGet035() => Scp035Data.GetScp035();
 
-		private List<Player> TryGetSH()
-		{
-			return SerpentsHand.API.SerpentsHand.GetSHPlayers();
-		}
+		private List<Player> TryGetSH() => SerpentsHand.API.SerpentsHand.GetSHPlayers();
 
-		private Dictionary<Player, bool> TryGetSpies()
-		{
-			return SpyData.GetSpies();
-		}
+		private Dictionary<Player, bool> TryGetSpies() => SpyData.GetSpies();
 
-		private void TrySpawnSpy(Player player, Player dc, Dictionary<Player, bool> spies)
-		{
-			SpyData.MakeSpy(player, spies[dc], false);
-		}
+		private void TrySpawnSpy(Player player, Player dc, Dictionary<Player, bool> spies) => SpyData.MakeSpy(player, spies[dc], false);
 
-		private void TrySpawnSH(Player player)
-		{
-			SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
-		}
+		private void TrySpawnSH(Player player) => SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
 
-		private void TrySpawn035(Player player)
-		{
-			Scp035Data.Spawn035(player);
-		}
+		private void TrySpawn035(Player player) => Scp035Data.Spawn035(player);
 
 		public void OnRoundStart()
 		{
 			isContain106 = false;
+			isRoundStarted = true;
 		}
 
-		public void OnContain106(ContainingEventArgs ev)
-		{
-			isContain106 = true;
-		}
+		public void OnRoundEnd() => isRoundStarted = false;
+
+		public void OnContain106(ContainingEventArgs ev) => isContain106 = true;
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
+			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator) return;
+
 			bool is035 = false;
 			bool isSH = false;
 			if (isContain106 && ev.Player.Role == RoleType.Scp106) return;
@@ -129,9 +114,9 @@ namespace DCReplace
 				player.ClearInventory();
 				player.ResetInventory(ev.Player.Inventory.items.Select(x => x.id).ToList());
 				player.Health = ev.Player.Health;
-				player.SetAmmo(AmmoType.Nato556, ev.Player.GetAmmo(AmmoType.Nato556));
-				player.SetAmmo(AmmoType.Nato762, ev.Player.GetAmmo(AmmoType.Nato762));
-				player.SetAmmo(AmmoType.Nato9, ev.Player.GetAmmo(AmmoType.Nato9));
+				player.Ammo[(int)AmmoType.Nato556] = ev.Player.Ammo[(int)AmmoType.Nato556];
+				player.Ammo[(int)AmmoType.Nato762] = ev.Player.Ammo[(int)AmmoType.Nato762];
+				player.Ammo[(int)AmmoType.Nato9] = ev.Player.Ammo[(int)AmmoType.Nato9];
 				player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
 			}
 		}
