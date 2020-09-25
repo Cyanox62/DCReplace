@@ -40,7 +40,8 @@ namespace DCReplace
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
-			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator) return;
+			Log.Warn(ev.Player.Position);
+			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997) return;
 
 			bool is035 = false;
 			bool isSH = false;
@@ -110,14 +111,26 @@ namespace DCReplace
 						Log.Debug("SCP-035 is not installed, skipping method call...");
 					}
 				}
-				player.Position = ev.Player.Position;
-				player.ClearInventory();
-				player.ResetInventory(ev.Player.Inventory.items.Select(x => x.id).ToList());
-				player.Health = ev.Player.Health;
-				player.Ammo[(int)AmmoType.Nato556] = ev.Player.Ammo[(int)AmmoType.Nato556];
-				player.Ammo[(int)AmmoType.Nato762] = ev.Player.Ammo[(int)AmmoType.Nato762];
-				player.Ammo[(int)AmmoType.Nato9] = ev.Player.Ammo[(int)AmmoType.Nato9];
-				player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
+
+				// save info
+				Vector3 pos = ev.Player.Position;
+				var inventory = ev.Player.Inventory.items.Select(x => x.id).ToList();
+				float health = ev.Player.Health;
+				uint ammo1 = ev.Player.Ammo[(int)AmmoType.Nato556];
+				uint ammo2 = ev.Player.Ammo[(int)AmmoType.Nato762];
+				uint ammo3 = ev.Player.Ammo[(int)AmmoType.Nato9];
+
+				Timing.CallDelayed(0.3f, () =>
+				{
+					player.Position = pos;
+					player.ClearInventory();
+					player.ResetInventory(inventory);
+					player.Health = health;
+					player.Ammo[(int)AmmoType.Nato556] = ammo1;
+					player.Ammo[(int)AmmoType.Nato762] = ammo2;
+					player.Ammo[(int)AmmoType.Nato9] = ammo3;
+					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
+				});
 			}
 		}
 	}
