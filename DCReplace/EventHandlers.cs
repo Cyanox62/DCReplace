@@ -47,6 +47,7 @@ namespace DCReplace
 			bool isSH = false;
 			if (isContain106 && ev.Player.Role == RoleType.Scp106) return;
 			Dictionary<Player, bool> spies = null;
+			var role = Exiled.Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.Util")?.GetMethod("GetRole")?.Invoke(null, new object[] {ev.Player});
 			try
 			{
 				is035 = ev.Player.Id == TryGet035()?.Id;
@@ -73,7 +74,7 @@ namespace DCReplace
 			{
 				Log.Debug("CISpy is not installed, skipping method call...");
 			}
-
+			
 			Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
 			if (player != null)
 			{
@@ -130,6 +131,7 @@ namespace DCReplace
 					player.Ammo[(int)AmmoType.Nato762] = ammo2;
 					player.Ammo[(int)AmmoType.Nato9] = ammo3;
 					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
+					if(role != null) Exiled.Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.CustomRoles")?.GetMethod("ChangeRole")?.Invoke(null, new object[] {player, role});
 				});
 			}
 		}
