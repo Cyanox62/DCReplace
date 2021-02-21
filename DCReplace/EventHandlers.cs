@@ -41,7 +41,6 @@ namespace DCReplace
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
-			Log.Warn(ev.Player.Position);
 			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997 || (ev.Player.CurrentRoom.Zone == ZoneType.LightContainment && Map.IsLCZDecontaminated)) return;
 
 			bool is035 = false;
