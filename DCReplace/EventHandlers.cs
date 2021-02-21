@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Exiled.Events.EventArgs;
 using Exiled.API.Features;
 using Exiled.API.Enums;
+using Exiled.Loader;
 
 namespace DCReplace
 {
@@ -41,12 +42,13 @@ namespace DCReplace
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
 			Log.Warn(ev.Player.Position);
-			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997) return;
+			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997 || (ev.Player.CurrentRoom.Zone == ZoneType.LightContainment && Map.IsLCZDecontaminated)) return;
 
 			bool is035 = false;
 			bool isSH = false;
 			if (isContain106 && ev.Player.Role == RoleType.Scp106) return;
 			Dictionary<Player, bool> spies = null;
+			var role = Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.Util")?.GetMethod("GetRole")?.Invoke(null, new object[] {ev.Player});
 			try
 			{
 				is035 = ev.Player.Id == TryGet035()?.Id;
@@ -73,7 +75,7 @@ namespace DCReplace
 			{
 				Log.Debug("CISpy is not installed, skipping method call...");
 			}
-
+			
 			Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
 			if (player != null)
 			{
@@ -130,6 +132,7 @@ namespace DCReplace
 					player.Ammo[(int)AmmoType.Nato762] = ammo2;
 					player.Ammo[(int)AmmoType.Nato9] = ammo3;
 					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
+					if(role != null) Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.CustomRoles")?.GetMethod("ChangeRole")?.Invoke(null, new object[] {player, role});
 				});
 			}
 		}
