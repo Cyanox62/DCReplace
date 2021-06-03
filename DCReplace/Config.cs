@@ -7,6 +7,8 @@ namespace DCReplace
 	{
 		[Description("Is the plugin enabled?")]
 		public bool IsEnabled { get; set; } = true;
+		[Description("Show debug logs?")]
+		public bool Debug { get; set; } = false;
 		[Description("Should the message sent be a hint? Setting to false will use broadcasts.")]
 		public bool UseHints { get; set; } = false;
 		[Description("The message sent to players when they replace someone.")]

@@ -32,29 +32,34 @@ namespace DCReplace
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
+			Log.Debug($"{ev.Player.Nickname} Left the server. Role: {ev.Player.Role}", _plugin.Config.Debug);
+
 			if (!_isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997 || (ev.Player.CurrentRoom.Zone == ZoneType.LightContainment && Map.IsLCZDecontaminated)) return;
 
 			var is035 = false;
 			var isSH = false;
+			var spawnDelay = .3f;
 			
 			if (_isContain106 && ev.Player.Role == RoleType.Scp106) return;
 			var role = Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.Util")?.GetMethod("GetRole")?.Invoke(null, new object[] {ev.Player});
 			try
 			{
 				is035 = Scp035.API.IsScp035(ev.Player);
+				Log.Debug($"Player was 035: {is035}", _plugin.Config.Debug);
 			}
 			catch (Exception x)
 			{
-				Log.Debug($"SCP-035 is not installed, skipping method call... {x}");
+				Log.Debug($"SCP-035 is not installed, skipping method call... {x}", _plugin.Config.Debug);
 			}
 
 			try
 			{
 				isSH = SerpentsHand.API.IsSerpent(ev.Player);
+				Log.Debug($"Player was SH: {isSH}", _plugin.Config.Debug);
 			}
 			catch (Exception x)
 			{
-				Log.Debug($"Serpents Hand is not installed, skipping method call... {x}");
+				Log.Debug($"Serpents Hand is not installed, skipping method call... {x}", _plugin.Config.Debug);
 			}
 
 			var player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
@@ -65,22 +70,30 @@ namespace DCReplace
 					try
 					{
 						SerpentsHand.API.SpawnPlayer(player);
+						//This is to accomodate for SH spawn time.
+						spawnDelay = .6f;
+						Log.Debug($"Replacing {ev.Player.Nickname} with {player.Nickname}. Role: Serpents Hand", _plugin.Config.Debug);
 					}
 					catch (Exception x)
 					{
-						Log.Debug($"Serpents Hand is not installed, skipping method call... {x}");
+						Log.Debug($"Serpents Hand is not installed, skipping method call... {x}", _plugin.Config.Debug);
 					}
 				}
-				else player.SetRole(ev.Player.Role);
+				else
+				{
+					player.SetRole(ev.Player.Role);
+					Log.Debug($"Replacing {ev.Player.Nickname} with {player.Nickname}. Role: {ev.Player.Role}", _plugin.Config.Debug);
+				}
 				if (is035)
 				{
 					try
 					{
 						Scp035.API.Spawn035(player);
+						Log.Debug($"Setting {player.Nickname} to SCP-035", _plugin.Config.Debug);
 					}
 					catch (Exception x)
 					{
-						Log.Debug($"SCP-035 is not installed, skipping method call... {x}");
+						Log.Debug($"SCP-035 is not installed, skipping method call... {x}", _plugin.Config.Debug);
 					}
 				}
 
@@ -92,7 +105,7 @@ namespace DCReplace
 				var ammo2 = ev.Player.Ammo[(int)AmmoType.Nato762];
 				var ammo3 = ev.Player.Ammo[(int)AmmoType.Nato9];
 
-				Timing.CallDelayed(0.3f, () =>
+				Timing.CallDelayed(spawnDelay, () =>
 				{
 					player.Position = pos;
 					player.ClearInventory();
