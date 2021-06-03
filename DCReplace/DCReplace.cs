@@ -10,7 +10,7 @@ namespace DCReplace
 		{
 			if (!Config.IsEnabled) return;
 
-			_ev = new EventHandlers();
+			_ev = new EventHandlers(this);
 
 			Exiled.Events.Handlers.Player.Left += _ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Scp106.Containing += _ev.OnContain106;

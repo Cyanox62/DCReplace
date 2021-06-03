@@ -13,6 +13,13 @@ namespace DCReplace
 		private bool _isContain106;
 		private bool _isRoundStarted;
 
+		private readonly DCReplace _plugin;
+
+		public EventHandlers(DCReplace plugin)
+		{
+			_plugin = plugin;
+		}
+
 		public void OnRoundStart()
 		{
 			_isContain106 = false;
@@ -38,7 +45,7 @@ namespace DCReplace
 			}
 			catch (Exception x)
 			{
-				Log.Debug("SCP-035 is not installed, skipping method call...");
+				Log.Debug($"SCP-035 is not installed, skipping method call... {x}");
 			}
 
 			try
@@ -47,7 +54,7 @@ namespace DCReplace
 			}
 			catch (Exception x)
 			{
-				Log.Debug("Serpents Hand is not installed, skipping method call...");
+				Log.Debug($"Serpents Hand is not installed, skipping method call... {x}");
 			}
 
 			var player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
@@ -61,7 +68,7 @@ namespace DCReplace
 					}
 					catch (Exception x)
 					{
-						Log.Debug("Serpents Hand is not installed, skipping method call...");
+						Log.Debug($"Serpents Hand is not installed, skipping method call... {x}");
 					}
 				}
 				else player.SetRole(ev.Player.Role);
@@ -73,7 +80,7 @@ namespace DCReplace
 					}
 					catch (Exception x)
 					{
-						Log.Debug("SCP-035 is not installed, skipping method call...");
+						Log.Debug($"SCP-035 is not installed, skipping method call... {x}");
 					}
 				}
 
@@ -94,7 +101,16 @@ namespace DCReplace
 					player.Ammo[(int)AmmoType.Nato556] = ammo1;
 					player.Ammo[(int)AmmoType.Nato762] = ammo2;
 					player.Ammo[(int)AmmoType.Nato9] = ammo3;
-					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
+
+					if (_plugin.Config.UseHints)
+					{
+						player.ShowHint(_plugin.Config.ReplaceMessage, _plugin.Config.MessageDuration);
+					}
+					else
+					{
+						player.Broadcast(_plugin.Config.MessageDuration, _plugin.Config.ReplaceMessage);
+					}
+
 					if(role != null) Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.CustomRoles")?.GetMethod("ChangeRole")?.Invoke(null, new object[] {player, role});
 				});
 			}
