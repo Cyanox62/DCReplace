@@ -4,30 +4,30 @@ namespace DCReplace
 {
 	public class DCReplace : Plugin<Config>
 	{
-		private EventHandlers ev;
+		private EventHandlers _ev;
 
 		public override void OnEnabled()
 		{
-			base.OnEnabled();
-
 			if (!Config.IsEnabled) return;
 
-			ev = new EventHandlers();
+			_ev = new EventHandlers(this);
 
-			Exiled.Events.Handlers.Player.Left += ev.OnPlayerLeave;
-			Exiled.Events.Handlers.Scp106.Containing += ev.OnContain106;
-			Exiled.Events.Handlers.Server.RoundStarted += ev.OnRoundStart;
+			Exiled.Events.Handlers.Player.Left += _ev.OnPlayerLeave;
+			Exiled.Events.Handlers.Scp106.Containing += _ev.OnContain106;
+			Exiled.Events.Handlers.Server.RoundStarted += _ev.OnRoundStart;
+			
+			base.OnEnabled();
 		}
 
 		public override void OnDisabled()
 		{
+			Exiled.Events.Handlers.Player.Left -= _ev.OnPlayerLeave;
+			Exiled.Events.Handlers.Scp106.Containing -= _ev.OnContain106;
+			Exiled.Events.Handlers.Server.RoundStarted -= _ev.OnRoundStart;
+
+			_ev = null;
+			
 			base.OnDisabled();
-
-			Exiled.Events.Handlers.Player.Left -= ev.OnPlayerLeave;
-			Exiled.Events.Handlers.Scp106.Containing -= ev.OnContain106;
-			Exiled.Events.Handlers.Server.RoundStarted -= ev.OnRoundStart;
-
-			ev = null;
 		}
 
 		public override string Name => "DcReplace";
