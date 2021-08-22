@@ -1,14 +1,13 @@
 ﻿using MEC;
 using System.Linq;
 using UnityEngine;
-using scp035.API;
 using System;
-using CISpy.API;
 using System.Collections.Generic;
 using Exiled.Events.EventArgs;
 using Exiled.API.Features;
 using Exiled.API.Enums;
 using Exiled.Loader;
+using System.Reflection;
 
 namespace DCReplace
 {
@@ -17,17 +16,52 @@ namespace DCReplace
 		private bool isContain106;
 		private bool isRoundStarted = false;
 
-		private Player TryGet035() => Scp035Data.GetScp035();
+		private Player TryGet035()
+		{
+			Player scp035 = null;
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "scp035") != null)
+				scp035 = (Player)Loader.Plugins.First(pl => pl.Name == "scp035").Assembly.GetType("scp035.API.Scp035Data").GetMethod("GetScp035", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+			return scp035;
+		}
 
-		private List<Player> TryGetSH() => SerpentsHand.API.SerpentsHand.GetSHPlayers();
+		private List<Player> TryGetSH() 
+		{
+			List<Player> players = new List<Player>();
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "SerpentsHand") != null)
+				players = (List<Player>)Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("GetSHPlayers", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+			return players;
+		}
 
-		private Dictionary<Player, bool> TryGetSpies() => SpyData.GetSpies();
+		private Dictionary<Player, bool> TryGetSpies()
+		{
+			Dictionary<Player, bool> players = new Dictionary<Player, bool>();
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "CiSpy") != null)
+				players = (Dictionary<Player, bool>)Loader.Plugins.First(pl => pl.Name == "CiSpy").Assembly.GetType("CISpy.API.SpyData").GetMethod("GetSpies", BindingFlags.Public | BindingFlags.Static).Invoke(null, null);
+			return players;
+		}
 
-		private void TrySpawnSpy(Player player, Player dc, Dictionary<Player, bool> spies) => SpyData.MakeSpy(player, spies[dc], false);
+		private void TrySpawnSpy(Player player, Player dc, Dictionary<Player, bool> spies) 
+		{
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "CiSpy") != null)
+			{
+				Loader.Plugins.First(pl => pl.Name == "CiSpy").Assembly.GetType("CISpy.API.SpyData").GetMethod("MakeSpy", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { player, spies[dc], false });
+			}
+		}
 
-		private void TrySpawnSH(Player player) => SerpentsHand.API.SerpentsHand.SpawnPlayer(player, false);
-
-		private void TrySpawn035(Player player) => Scp035Data.Spawn035(player);
+		private void TrySpawnSH(Player player) 
+		{
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "SerpentsHand") != null)
+			{
+				Loader.Plugins.First(pl => pl.Name == "SerpentsHand").Assembly.GetType("SerpentsHand.API.SerpentsHand").GetMethod("SpawnPlayer", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { player, false });
+			}
+		} 
+		private void TrySpawn035(Player player)
+		{
+			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "scp035") != null)
+			{
+				Loader.Plugins.First(pl => pl.Name == "scp035").Assembly.GetType("scp035.API.Scp035Data").GetMethod("GetScp035", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { player });
+			}
+		}
 
 		public void OnRoundStart()
 		{
@@ -41,7 +75,7 @@ namespace DCReplace
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
-			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997 || (ev.Player.CurrentRoom.Zone == ZoneType.LightContainment && Map.IsLCZDecontaminated)) return;
+			if (!isRoundStarted || ev.Player.Role == RoleType.Spectator || ev.Player.Position.y < -1997 || (ev.Player.CurrentRoom.Zone == ZoneType.LightContainment && Map.IsLczDecontaminated)) return;
 
 			bool is035 = false;
 			bool isSH = false;
@@ -115,11 +149,13 @@ namespace DCReplace
 
 				// save info
 				Vector3 pos = ev.Player.Position;
-				var inventory = ev.Player.Inventory.items.Select(x => x.id).ToList();
+				var inventory = ev.Player.Items.Select(x => x.Type).ToList();
 				float health = ev.Player.Health;
-				uint ammo1 = ev.Player.Ammo[(int)AmmoType.Nato556];
-				uint ammo2 = ev.Player.Ammo[(int)AmmoType.Nato762];
-				uint ammo3 = ev.Player.Ammo[(int)AmmoType.Nato9];
+				Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
+				foreach (global::ItemType ammoType in ev.Player.Ammo.Keys)
+				{
+					ammo.Add(ammoType, ev.Player.Ammo[ammoType]);
+				}
 
 				Timing.CallDelayed(0.3f, () =>
 				{
@@ -127,9 +163,10 @@ namespace DCReplace
 					player.ClearInventory();
 					player.ResetInventory(inventory);
 					player.Health = health;
-					player.Ammo[(int)AmmoType.Nato556] = ammo1;
-					player.Ammo[(int)AmmoType.Nato762] = ammo2;
-					player.Ammo[(int)AmmoType.Nato9] = ammo3;
+					foreach (global::ItemType ammoType in ammo.Keys)
+					{
+						player.Ammo[ammoType] = ammo[ammoType];
+					}
 					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
 					if(role != null) Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.CustomRoles")?.GetMethod("ChangeRole")?.Invoke(null, new object[] {player, role});
 				});
