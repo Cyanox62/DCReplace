@@ -17,6 +17,7 @@ namespace DCReplace
 			Exiled.Events.Handlers.Player.Left += ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Scp106.Containing += ev.OnContain106;
 			Exiled.Events.Handlers.Server.RoundStarted += ev.OnRoundStart;
+			Exiled.Events.Handlers.Player.Spawning += ev.OnSpawning;
 		}
 
 		public override void OnDisabled()
@@ -26,6 +27,7 @@ namespace DCReplace
 			Exiled.Events.Handlers.Player.Left -= ev.OnPlayerLeave;
 			Exiled.Events.Handlers.Scp106.Containing -= ev.OnContain106;
 			Exiled.Events.Handlers.Server.RoundStarted -= ev.OnRoundStart;
+			Exiled.Events.Handlers.Player.Spawning -= ev.OnSpawning;
 
 			ev = null;
 		}

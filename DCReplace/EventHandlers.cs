@@ -16,6 +16,8 @@ namespace DCReplace
 		private bool isContain106;
 		private bool isRoundStarted = false;
 
+		private Dictionary<Player, Vector3> PositionsToSpawn = new Dictionary<Player, Vector3>();
+
 		private Player TryGet035()
 		{
 			Player scp035 = null;
@@ -67,11 +69,21 @@ namespace DCReplace
 		{
 			isContain106 = false;
 			isRoundStarted = true;
+			PositionsToSpawn.Clear();
 		}
 
 		public void OnRoundEnd() => isRoundStarted = false;
 
 		public void OnContain106(ContainingEventArgs ev) => isContain106 = true;
+
+		public void OnSpawning(SpawningEventArgs ev)
+		{
+			if (PositionsToSpawn.ContainsKey(ev.Player))
+			{
+				ev.Position = PositionsToSpawn[ev.Player];
+				PositionsToSpawn.Remove(ev.Player);
+			}
+		}
 
 		public void OnPlayerLeave(LeftEventArgs ev)
 		{
@@ -112,6 +124,7 @@ namespace DCReplace
 			Player player = Player.List.FirstOrDefault(x => x.Role == RoleType.Spectator && x.UserId != string.Empty && x.UserId != ev.Player.UserId && !x.IsOverwatchEnabled);
 			if (player != null)
 			{
+				PositionsToSpawn.Add(player, ev.Player.Position);
 				if (isSH)
 				{
 					try
@@ -148,22 +161,19 @@ namespace DCReplace
 				}
 
 				// save info
-				Vector3 pos = ev.Player.Position;
 				var inventory = ev.Player.Items.Select(x => x.Type).ToList();
 				float health = ev.Player.Health;
-				Dictionary<global::ItemType, ushort> ammo = new Dictionary<global::ItemType, ushort>();
-				foreach (global::ItemType ammoType in ev.Player.Ammo.Keys)
+				Dictionary<ItemType, ushort> ammo = new Dictionary<ItemType, ushort>();
+				foreach (ItemType ammoType in ev.Player.Ammo.Keys)
 				{
 					ammo.Add(ammoType, ev.Player.Ammo[ammoType]);
 				}
 
 				Timing.CallDelayed(0.3f, () =>
 				{
-					player.Position = pos;
-					player.ClearInventory();
 					player.ResetInventory(inventory);
 					player.Health = health;
-					foreach (global::ItemType ammoType in ammo.Keys)
+					foreach (ItemType ammoType in ammo.Keys)
 					{
 						player.Ammo[ammoType] = ammo[ammoType];
 					}
