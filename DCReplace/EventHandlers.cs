@@ -61,7 +61,7 @@ namespace DCReplace
 		{
 			if (Loader.Plugins.FirstOrDefault(pl => pl.Name == "scp035") != null)
 			{
-				Loader.Plugins.First(pl => pl.Name == "scp035").Assembly.GetType("scp035.API.Scp035Data").GetMethod("GetScp035", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { player });
+				Loader.Plugins.First(pl => pl.Name == "scp035").Assembly.GetType("scp035.API.Scp035Data").GetMethod("Spawn035", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { player });
 			}
 		}
 
@@ -100,6 +100,7 @@ namespace DCReplace
 			}
 			catch (Exception x)
 			{
+				Log.Error(x);
 				Log.Debug("SCP-035 is not installed, skipping method call...");
 			}
 
@@ -175,7 +176,8 @@ namespace DCReplace
 					player.Health = health;
 					foreach (ItemType ammoType in ammo.Keys)
 					{
-						player.Ammo[ammoType] = ammo[ammoType];
+						player.Inventory.UserInventory.ReserveAmmo[ammoType] = ammo[ammoType];
+						player.Inventory.SendAmmoNextFrame = true;
 					}
 					player.Broadcast(5, "<i>You have replaced a player who has disconnected.</i>");
 					if(role != null) Loader.Plugins.FirstOrDefault(pl => pl.Name == "EasyEvents")?.Assembly.GetType("EasyEvents.CustomRoles")?.GetMethod("ChangeRole")?.Invoke(null, new object[] {player, role});
